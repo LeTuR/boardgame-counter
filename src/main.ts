@@ -35,7 +35,11 @@ function update(game: Partial<Game>) {
 }
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // Storage blocked or full (e.g. private browsing): keep playing, just unsaved.
+  }
 }
 
 const list = document.querySelector<HTMLUListElement>("#players")!;
