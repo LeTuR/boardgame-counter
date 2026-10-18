@@ -1,7 +1,8 @@
 # boardgame-counter
 
 A phone-first PWA for keeping score in board games, round by round. Add players, tap `+`/`−`
-by a step of 1, 5 or 10 to score the current round, then *Next round*. A table
+by a step of 1, 5 or 10, or type a value (negatives too), to score the current
+round, then *Next round*. A table
 shows every round, the cards show running totals. Undo works across rounds.
 The look follows the [thurbox](https://github.com/Thurbeen/thurbox) website.
 Everything stays on the device (`localStorage`) and works offline once loaded.

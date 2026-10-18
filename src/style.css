@@ -250,6 +250,32 @@ output {
   font-size: 1rem;
 }
 
+.entry {
+  grid-column: 2 / -1;
+  display: flex;
+  gap: 8px;
+}
+
+.entry input {
+  flex: 1;
+  min-width: 0;
+  /* Hide the spinner arrows; the -/+ buttons already do that job. */
+  appearance: textfield;
+}
+
+.entry input::-webkit-inner-spin-button,
+.entry input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.entry input,
+#add-player input {
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  background: #0d0b09;
+}
+
 #add-player {
   display: flex;
   gap: 10px;
@@ -259,9 +285,6 @@ output {
 #add-player input {
   flex: 1;
   min-width: 0;
-  padding: 10px 14px;
-  border: 2px solid var(--border);
-  background: #0d0b09;
 }
 
 .table-wrap {

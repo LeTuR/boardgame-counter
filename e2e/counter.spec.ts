@@ -145,3 +145,27 @@ test.describe("rounds", () => {
     await expect(cells(page, 1)).toHaveText(["1"]);
   });
 });
+
+test.describe("typed points", () => {
+  const field = (page: Page, name: string) => page.getByRole("spinbutton", { name: `Points for ${name}` });
+
+  test("adds a typed value to the current round", async ({ page }) => {
+    await addPlayer(page, "Alice");
+    const alice = player(page, "Alice");
+    await field(page, "Alice").fill("12");
+    await alice.getByRole("button", { name: "Add typed points to Alice" }).click();
+    await field(page, "Alice").fill("-3");
+    await field(page, "Alice").press("Enter");
+    await expect(alice.getByTestId("round-score")).toHaveText("+9");
+    await expect(alice.getByTestId("score")).toHaveText("9");
+    await expect(field(page, "Alice")).toHaveValue("");
+  });
+
+  test("ignores an empty value", async ({ page }) => {
+    await addPlayer(page, "Alice");
+    await field(page, "Alice").press("Enter");
+    await expect(page.getByRole("button", { name: "Undo" })).toBeEnabled();
+    await page.getByRole("button", { name: "Undo" }).click();
+    await expect(page.getByRole("listitem")).toHaveCount(0);
+  });
+});

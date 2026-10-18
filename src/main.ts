@@ -67,13 +67,19 @@ function render() {
         <span class="name"><span></span><small data-testid="round-score"></small></span>
         <button class="minus" type="button">−</button>
         <output data-testid="score"></output>
-        <button class="plus" type="button">+</button>`;
+        <button class="plus" type="button">+</button>
+        <form class="entry">
+          <input name="points" type="number" step="1" placeholder="Points" />
+          <button type="submit">Add</button>
+        </form>`;
       item.querySelector(".name span")!.textContent = p.name;
       item.querySelector("small")!.textContent = signed(points(current(), p.id));
       item.querySelector("output")!.textContent = String(totals.get(p.id));
       item.querySelector(".remove")!.setAttribute("aria-label", `Remove ${p.name}`);
       item.querySelector(".minus")!.setAttribute("aria-label", `Remove points from ${p.name}`);
       item.querySelector(".plus")!.setAttribute("aria-label", `Add points to ${p.name}`);
+      item.querySelector("input")!.setAttribute("aria-label", `Points for ${p.name}`);
+      item.querySelector(".entry button")!.setAttribute("aria-label", `Add typed points to ${p.name}`);
       item.dataset.id = p.id;
       return item;
     }),
@@ -108,10 +114,22 @@ list.addEventListener("click", (event) => {
     if (confirm(`Remove ${name}?`)) update({ players: state.players.filter((p) => p.id !== id) });
     return;
   }
-  const delta = button.classList.contains("plus") ? state.step : -state.step;
+  if (button.type === "submit") return;
+  score(id, button.classList.contains("plus") ? state.step : -state.step);
+});
+
+list.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const entry = event.target as HTMLFormElement;
+  const value = Math.trunc(Number((entry.elements.namedItem("points") as HTMLInputElement).value));
+  const id = entry.closest("li")?.dataset.id;
+  if (id && value) score(id, value);
+});
+
+function score(id: string, delta: number) {
   const round = { ...current(), [id]: points(current(), id) + delta };
   update({ rounds: [...state.rounds.slice(0, -1), round] });
-});
+}
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
