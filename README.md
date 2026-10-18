@@ -18,7 +18,7 @@ flowchart LR
 
 ## Install on a phone
 
-Open the deployed site, then *Add to Home screen* (Android Chrome) or
+Open <https://letur.github.io/boardgame-counter/>, then *Add to Home screen* (Android Chrome) or
 *Share → Add to Home Screen* (iOS Safari).
 
 ## Develop
