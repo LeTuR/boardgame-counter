@@ -1,0 +1,16 @@
+# Run with prek: `prek install` once, then it runs on every commit.
+repos:
+  - repo: builtin
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+  - repo: local
+    hooks:
+      - id: typecheck
+        name: typecheck
+        entry: npm run typecheck
+        language: system
+        pass_filenames: false
+        types_or: [ts]
