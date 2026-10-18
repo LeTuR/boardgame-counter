@@ -89,3 +89,59 @@ test("is installable and works offline", async ({ page, context }) => {
   await page.reload();
   await expect(page.getByRole("heading", { name: "Score Counter" })).toBeVisible();
 });
+
+test.describe("rounds", () => {
+  const plus = (page: Page, name: string) =>
+    player(page, name).getByRole("button", { name: `Add points to ${name}` }).click();
+  const cells = (page: Page, round: number) =>
+    page.getByRole("table", { name: "Scores per round" }).getByRole("row", { name: `Round ${round}` }).getByRole("cell");
+
+  test("counts points per round and keeps a running total", async ({ page }) => {
+    await addPlayer(page, "Alice");
+    await addPlayer(page, "Bob");
+    await plus(page, "Alice");
+    await plus(page, "Alice");
+    await expect(player(page, "Alice").getByTestId("round-score")).toHaveText("+2");
+
+    await page.getByRole("button", { name: "Next round" }).click();
+    await expect(page.getByRole("heading", { name: "Round 2" })).toBeVisible();
+    await expect(player(page, "Alice").getByTestId("round-score")).toHaveText("+0");
+
+    await plus(page, "Alice");
+    await page.getByRole("radio", { name: "5" }).check();
+    await plus(page, "Bob");
+
+    await expect(cells(page, 1)).toHaveText(["2", "0"]);
+    await expect(cells(page, 2)).toHaveText(["1", "5"]);
+    await expect(player(page, "Alice").getByTestId("score")).toHaveText("3");
+    await expect(player(page, "Bob").getByTestId("score")).toHaveText("5");
+  });
+
+  test("undo reopens the previous round", async ({ page }) => {
+    await addPlayer(page, "Alice");
+    await plus(page, "Alice");
+    await page.getByRole("button", { name: "Next round" }).click();
+    await page.getByRole("button", { name: "Undo" }).click();
+    await expect(page.getByRole("heading", { name: "Round 1" })).toBeVisible();
+    await expect(player(page, "Alice").getByTestId("round-score")).toHaveText("+1");
+  });
+
+  test("new game goes back to round 1", async ({ page }) => {
+    await addPlayer(page, "Alice");
+    await plus(page, "Alice");
+    await page.getByRole("button", { name: "Next round" }).click();
+    page.once("dialog", (d) => d.accept());
+    await page.getByRole("button", { name: "New game" }).click();
+    await expect(page.getByRole("heading", { name: "Round 1" })).toBeVisible();
+    await expect(cells(page, 2)).toHaveCount(0);
+  });
+
+  test("keeps rounds across reloads", async ({ page }) => {
+    await addPlayer(page, "Alice");
+    await plus(page, "Alice");
+    await page.getByRole("button", { name: "Next round" }).click();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Round 2" })).toBeVisible();
+    await expect(cells(page, 1)).toHaveText(["1"]);
+  });
+});

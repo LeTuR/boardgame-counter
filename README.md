@@ -1,12 +1,14 @@
 # boardgame-counter
 
-A phone-first PWA for keeping score in board games. Add players, tap `+`/`−`
-by a step of 1, 5 or 10, undo mistakes, start a new game with the same table.
+A phone-first PWA for keeping score in board games, round by round. Add players, tap `+`/`−`
+by a step of 1, 5 or 10 to score the current round, then *Next round*. A table
+shows every round, the cards show running totals. Undo works across rounds.
+The look follows the [thurbox](https://github.com/Thurbeen/thurbox) website.
 Everything stays on the device (`localStorage`) and works offline once loaded.
 
 ```mermaid
 flowchart LR
-  tap[Tap + / −] --> update["update(players)"]
+  tap[Tap + / − or Next round] --> update["update(game)"]
   update --> history[push previous state to undo history]
   update --> save[localStorage]
   update --> render[re-render list]
