@@ -1,5 +1,6 @@
 /* Theme borrowed from the thurbox website: warm charcoal, Doom-red and
-   terminal-green accents, pixel display font, squared beveled panels. */
+   terminal-green accents, pixel display font, squared beveled panels.
+   Layout: fixed header and bottom bar, the score sheet scrolls between them. */
 
 @font-face {
   font-family: "Press Start 2P";
@@ -20,6 +21,7 @@
   --bg: #15120f;
   --card: #1e1a16;
   --hover: #2a241e;
+  --well: #0d0b09;
   --border: #36302a;
   --text: #e0e0e0;
   --muted: #948a7d;
@@ -32,22 +34,26 @@
   --bevel:
     0 0 0 2px #07060a, inset 2px 2px 0 0 rgb(255 255 255 / 0.14),
     inset -2px -2px 0 0 rgb(0 0 0 / 0.62);
-  --bevel-glow-red:
-    0 0 0 2px #07060a, 0 0 12px rgb(232 24 11 / 0.5), inset 2px 2px 0 0 rgb(255 255 255 / 0.14),
-    inset -2px -2px 0 0 rgb(0 0 0 / 0.62);
+  --gutter-l: max(16px, env(safe-area-inset-left));
+  --gutter-r: max(16px, env(safe-area-inset-right));
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   font-family: var(--font-mono);
   color: var(--text);
   background: var(--bg) radial-gradient(ellipse at 50% -10%, rgb(255 59 48 / 0.08), transparent 55%) fixed;
-  padding: env(safe-area-inset-top) 16px calc(16px + env(safe-area-inset-bottom));
 }
 
 /* CRT scanlines, click-through. */
@@ -56,28 +62,34 @@ body::after {
   position: fixed;
   inset: 0;
   pointer-events: none;
+  z-index: 10;
   background: repeating-linear-gradient(to bottom, transparent 0 2px, rgb(0 0 0 / 0.2) 2px 3px);
 }
 
 h1,
-h2,
-output {
+h2 {
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
   text-transform: uppercase;
   color: var(--red);
   text-shadow: var(--glow-red-type);
-}
-
-h1 {
-  margin: 0;
-  font-size: 1rem;
   line-height: 1.5;
 }
 
+h1 {
+  font-size: 0.9rem;
+}
+
 h2 {
+  font-size: 0.75rem;
+}
+
+h3 {
   margin: 0;
   font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
 }
 
 button,
@@ -88,10 +100,11 @@ input {
 }
 
 button {
+  min-height: 44px;
   border: 2px solid var(--border);
   background: var(--card);
   box-shadow: var(--bevel);
-  padding: 10px 14px;
+  padding: 8px 14px;
   touch-action: manipulation;
   cursor: pointer;
 }
@@ -104,14 +117,26 @@ button:disabled {
   opacity: 0.4;
 }
 
-button.primary,
-.plus {
+button.primary {
   background: var(--green);
   border-color: var(--green);
   color: var(--on-green);
+  font-weight: 700;
   box-shadow:
     var(--bevel),
     0 0 10px rgb(110 255 110 / 0.4);
+}
+
+button.danger {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  background: var(--well);
 }
 
 :focus-visible {
@@ -121,206 +146,289 @@ button.primary,
 
 header {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-block: 16px;
-  max-width: 560px;
-  margin: 0 auto;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
+  padding: calc(env(safe-area-inset-top) + 12px) var(--gutter-r) 12px var(--gutter-l);
 }
 
 main {
-  max-width: 560px;
-  margin: 0 auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--gutter-r) 0 var(--gutter-l);
 }
 
-.round-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.6fr;
   gap: 12px;
-  margin-bottom: 16px;
+  padding: 12px var(--gutter-r) calc(env(safe-area-inset-bottom) + 12px) var(--gutter-l);
+  border-top: 2px solid var(--border);
+  background: var(--bg);
 }
 
-.step {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  border: 0;
-  padding: 0;
-  margin: 0 0 16px;
+footer button {
+  min-height: 52px;
+}
+
+/* ---- Empty state ---- */
+
+.empty {
+  margin: auto;
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  text-align: center;
   color: var(--muted);
 }
 
-.step legend {
-  float: left;
-  margin-right: 4px;
+[hidden] {
+  display: none !important;
 }
 
-.step label {
-  position: relative;
-  min-width: 48px;
-  text-align: center;
-  padding: 8px 12px;
-  color: var(--text);
-  background: var(--card);
+/* ---- Score sheet: scrolls both ways, names / round labels / totals stay put ---- */
+
+.sheet {
+  /* Hugs the table, and scrolls once it outgrows the space. */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
   border: 2px solid var(--border);
   box-shadow: var(--bevel);
-}
-
-.step input {
-  position: absolute;
-  opacity: 0;
-  inset: 0;
-}
-
-.step label:has(input:checked) {
-  border-color: var(--red);
-  color: var(--red);
-}
-
-.step label:has(input:focus-visible) {
-  outline: 2px solid var(--green);
-  outline-offset: 2px;
-}
-
-#players {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-}
-
-#players li {
-  display: grid;
-  grid-template-columns: auto 1fr 52px 5ch 52px;
-  align-items: center;
-  gap: 8px;
   background: var(--card);
-  border: 2px solid var(--border);
-  box-shadow: var(--bevel);
-  padding: 8px;
-}
-
-#players li.leader {
-  border-color: var(--red);
-  box-shadow: var(--bevel-glow-red);
-}
-
-.name {
-  display: grid;
-  min-width: 0;
-}
-
-.name span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 700;
-}
-
-.name small {
-  color: var(--muted);
-}
-
-.remove {
-  border: 0;
-  box-shadow: none;
-  background: transparent;
-  padding: 8px;
-  color: var(--muted);
-}
-
-.plus,
-.minus {
-  height: 52px;
-  font-size: 1.5rem;
-  padding: 0;
-}
-
-output {
-  text-align: center;
-  font-size: 1rem;
-}
-
-.entry {
-  grid-column: 2 / -1;
-  display: flex;
-  gap: 8px;
-}
-
-.entry input {
-  flex: 1;
-  min-width: 0;
-  /* Hide the spinner arrows; the -/+ buttons already do that job. */
-  appearance: textfield;
-}
-
-.entry input::-webkit-inner-spin-button,
-.entry input::-webkit-outer-spin-button {
-  appearance: none;
-  margin: 0;
-}
-
-.entry input,
-#add-player input {
-  padding: 10px 14px;
-  border: 2px solid var(--border);
-  background: #0d0b09;
-}
-
-#add-player {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-#add-player input {
-  flex: 1;
-  min-width: 0;
-}
-
-.table-wrap {
-  overflow-x: auto;
-  margin-top: 24px;
+  margin-bottom: 12px;
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+  font-variant-numeric: tabular-nums;
 }
 
 th,
 td {
-  padding: 8px 12px;
-  text-align: right;
+  padding: 0;
   border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--card);
   white-space: nowrap;
-  font-variant-numeric: tabular-nums;
 }
 
 thead th {
-  background: var(--card);
-  max-width: 10ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--hover);
+  border-bottom: 2px solid var(--border);
 }
 
-tbody th {
+tbody th,
+tfoot th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding: 0 12px;
   text-align: left;
   font-weight: 400;
+  font-size: 0.8rem;
   color: var(--muted);
 }
 
-tr.current td,
-tr.current th {
+thead th.corner {
+  left: 0;
+  z-index: 3;
+}
+
+tfoot th,
+tfoot td {
+  position: sticky;
+  bottom: 0;
+  background: var(--hover);
+  border-top: 2px solid var(--border);
+  border-bottom: 0;
+}
+
+tfoot th {
+  z-index: 3;
+  color: var(--text);
+}
+
+tfoot td {
+  padding: 12px 8px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+tfoot td.leader {
+  color: var(--red);
+  text-shadow: var(--glow-red-type);
+  box-shadow: inset 0 0 0 2px var(--red);
+}
+
+/* Cells are buttons, so they lose the raised look and fill their cell. */
+th button,
+td button {
+  width: 100%;
+  min-width: 72px;
+  min-height: 48px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0 10px;
+}
+
+thead button.player {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+
+td button.blank {
+  color: var(--muted);
+}
+
+tr.current th,
+tr.current td button:not(.blank) {
   color: var(--green);
+}
+
+tr.current td {
+  background: #1a2216;
+}
+
+/* ---- Dialogs: bottom sheets, within thumb reach ---- */
+
+dialog {
+  width: 100%;
+  max-width: 480px;
+  margin: auto auto 0;
+  padding: 20px var(--gutter-r) calc(env(safe-area-inset-bottom) + 20px) var(--gutter-l);
+  border: 2px solid var(--border);
+  border-bottom: 0;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--bevel);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.7);
+}
+
+dialog form {
+  display: grid;
+  gap: 16px;
+}
+
+dialog label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.points input {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  text-align: center;
+  padding: 16px;
+  color: var(--text);
+  appearance: textfield;
+}
+
+.points input::-webkit-inner-spin-button,
+.points input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.quick {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.quick button {
+  padding: 8px 0;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.buttons button {
+  flex: 1;
+  padding-inline: 8px;
+  white-space: nowrap;
+}
+
+.buttons .primary {
+  flex: 1.6;
+}
+
+/* Visual order; the markup keeps Save first so Enter saves. */
+.buttons .cancel {
+  order: -2;
+}
+
+.buttons .danger {
+  order: -3;
+}
+
+.error {
+  margin: -8px 0 0;
+  color: var(--red);
+  font-size: 0.85rem;
+}
+
+.error:empty {
+  display: none;
+}
+
+.known {
+  display: grid;
+  gap: 8px;
+}
+
+.known ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.known li {
+  display: flex;
+}
+
+.known .chip {
+  border-right: 0;
+}
+
+.known .forget {
+  padding: 8px 10px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog[open] {
+    animation: rise 120ms ease-out;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
 }

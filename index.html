@@ -12,36 +12,69 @@
   <body>
     <header>
       <h1>Score Counter</h1>
-      <div class="actions">
-        <button id="undo" type="button" disabled>Undo</button>
-        <button id="new-game" type="button">New game</button>
-      </div>
+      <button id="new-game" type="button">New game</button>
     </header>
 
     <main>
-      <section class="round-bar">
-        <h2 id="round-title">Round 1</h2>
-        <button id="next-round" class="primary" type="button">Next round</button>
+      <section id="empty" class="empty">
+        <p>Add the players to start.</p>
+        <button class="primary add-player" type="button">Add player</button>
       </section>
 
-      <fieldset class="step">
-        <legend>Step</legend>
-        <label><input type="radio" name="step" value="1" checked />1</label>
-        <label><input type="radio" name="step" value="5" />5</label>
-        <label><input type="radio" name="step" value="10" />10</label>
-      </fieldset>
-
-      <ul id="players"></ul>
-
-      <form id="add-player">
-        <input name="name" placeholder="Player name" autocomplete="off" maxlength="30" />
-        <button type="submit">Add player</button>
-      </form>
-
-      <div class="table-wrap">
-        <table id="rounds" aria-label="Scores per round"></table>
+      <div class="sheet">
+        <table id="scores" aria-label="Scores"></table>
       </div>
     </main>
+
+    <footer>
+      <button id="undo" type="button" disabled>Undo</button>
+      <button class="add-player" type="button" aria-label="Add player">+ Player</button>
+      <button id="next-round" class="primary" type="button">Next round</button>
+    </footer>
+
+    <dialog id="score-dialog" aria-labelledby="score-title">
+      <form method="dialog">
+        <h2 id="score-title"></h2>
+        <label class="points">
+          <span>Points</span>
+          <input name="points" type="number" step="1" inputmode="numeric" autocomplete="off" />
+        </label>
+        <div class="quick">
+          <button type="button" data-delta="-10">−10</button>
+          <button type="button" data-delta="-5">−5</button>
+          <button type="button" data-delta="-1">−1</button>
+          <button type="button" data-delta="1">+1</button>
+          <button type="button" data-delta="5">+5</button>
+          <button type="button" data-delta="10">+10</button>
+        </div>
+        <!-- Save comes first so Enter saves; CSS sets the visual order. -->
+        <div class="buttons">
+          <button value="save">Save</button>
+          <button value="next" class="primary">Next player ›</button>
+          <button value="cancel" class="cancel">Cancel</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="player-dialog" aria-labelledby="player-title">
+      <form method="dialog">
+        <h2 id="player-title"></h2>
+        <label>
+          <span>Name</span>
+          <input name="name" autocomplete="off" maxlength="30" />
+        </label>
+        <p class="error" role="alert"></p>
+        <div class="known">
+          <h3>Remembered players</h3>
+          <ul></ul>
+        </div>
+        <div class="buttons">
+          <button value="save" class="primary">Save</button>
+          <button value="cancel" class="cancel">Cancel</button>
+          <button value="remove" class="danger">Remove</button>
+        </div>
+      </form>
+    </dialog>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
